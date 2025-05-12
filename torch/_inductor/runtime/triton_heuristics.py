@@ -32,6 +32,7 @@ from typing import (
 import torch
 from torch._prims_common import compute_required_storage_length
 from torch.utils._ordered_set import OrderedSet
+from torch._dynamo.utils import set_feature_use
 
 from ..triton_bundler import TritonBundler
 from ..utils import prefix_is_reduction, triton_version_uses_attrs_dict
@@ -1288,6 +1289,9 @@ class StaticTritonCompileResult(CompileResult[StaticallyLaunchedCudaKernel]):
         self.kernel.cubin_path = cubin_location
 
     def make_launcher(self) -> LauncherType:
+        # If at least one static make_launcher call occurs,
+        # we're sure static cuda launcher was used for this compile
+        set_feature_use("static_cuda_launcher", True)
         # Load the binary on the parent
         if not self.kernel.cubin_path:
             self.reload_cubin_path()
